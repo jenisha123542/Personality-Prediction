@@ -22,11 +22,20 @@ from scipy.special import expit
 
 DATA_PATH = r"C:\Users\NITRO\Documents\mbti__1.xlsx"
 
+# All text columns — updated to match the full dataset schema
 TEXT_COLUMNS = [
     'profession', 'hobbies', 'interests', 'bio',
     'personality_traits', 'lifestyle_habits',
-    'values_beliefs', 'goals_ambitions', 'fun_fact'
+    'values_beliefs', 'goals_ambitions', 'fun_fact',
+    # New columns
+    'social_preference', 'skills_talents',
+    'relationship_goal', 'communication_style',
+    'horoscope_sign', 'location',
 ]
+
+# Non-text / metadata columns (used for output/display only, not for training)
+META_COLUMNS = ['location', 'birthdate', 'age', 'horoscope_sign',
+                'relationship_goal', 'communication_style']
 
 VECTOR_CONFIGS = [
     {'max_features': 7000,  'ngram_range': (1, 2), 'stop_words': 'english', 'min_df': 2},
@@ -78,12 +87,34 @@ def light_clean(text: str) -> str:
 
 
 def combine_profile(row) -> str:
+    """Combine all available text columns into a single profile string."""
     parts = []
     for col in TEXT_COLUMNS:
         val = row.get(col, "")
-        if pd.notna(val) and val:
-            parts.append(str(val))
+        if pd.notna(val) and str(val).strip():
+            parts.append(str(val).strip())
     return " ".join(parts)
+
+
+def safe_int(val, default=None):
+    """Safely convert a value to int."""
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return default
+
+
+def parse_birthdate(val):
+    """Parse birthdate string or datetime to a date string 'YYYY-MM-DD'."""
+    if pd.isna(val):
+        return None
+    if isinstance(val, str):
+        val = val.strip()
+        return val if val else None
+    try:
+        return pd.Timestamp(val).strftime('%Y-%m-%d')
+    except Exception:
+        return None
 
 
 # ──────────────────────────────────────────────
@@ -330,7 +361,7 @@ def train_final_model(df, config, best_model_name):
         clf = clone(model_template)
         clf.fit(X_all, y)
         models[trait]   = clf
-        encoders[trait] = le  
+        encoders[trait] = le
 
     bundle = {
         'vectorizer': vec,
@@ -385,15 +416,12 @@ def explain(text, vectorizer, models, encoders):
     Returns top 5 words from the bio that most influenced each trait prediction.
     Only works for LinearSVC (uses coef_ weights).
     Falls back to empty list for other model types.
-
-    Returns dict: { 'IE': [('word', score), ...], 'NS': [...], ... }
     """
     cleaned       = light_clean(text)
     X             = vectorizer.transform([cleaned])
     feature_names = vectorizer.get_feature_names_out()
     X_arr         = X.toarray()[0]
 
-    # Index of features that are actually present in this bio
     present_idx = np.where(X_arr > 0)[0]
 
     explanations = {}
@@ -407,14 +435,7 @@ def explain(text, vectorizer, models, encoders):
             explanations[trait] = []
             continue
 
-        # coef_ is (1, n_features) for binary LinearSVC
-        coef = clf.coef_[0]
-
-        # Score each present word: coef * tfidf_weight
-        # Positive score = pushes toward class 1
-        # Negative score = pushes toward class 0
-        # We flip sign if class 0 was predicted so top scores
-        # always mean "most responsible for this prediction"
+        coef      = clf.coef_[0]
         direction = 1 if raw_pred == 1 else -1
 
         scored = [
@@ -422,7 +443,6 @@ def explain(text, vectorizer, models, encoders):
             for i in present_idx
         ]
 
-        # Keep only words that positively contributed, take top 5
         top = sorted(scored, key=lambda x: x[1], reverse=True)[:5]
         top = [(w, round(s, 4)) for w, s in top if s > 0]
 
@@ -465,7 +485,6 @@ from flask_cors import CORS
 flask_app = Flask(__name__, static_folder=".")
 CORS(flask_app)
 
-# Global model refs used by Flask routes
 _vectorizer = None
 _models     = None
 _encoders   = None
@@ -486,13 +505,25 @@ def predict_route():
     if data is None:
         return jsonify({"error": "Request body must be valid JSON.", "code": "INVALID_JSON"}), 400
 
-    bio = data.get("bio", "")
-    is_valid, error_code, message = validate_bio(bio)
+    # ── Build profile text from all available fields ──────────────────────────
+    # If a full profile dict is sent, combine all text fields.
+    # If only "bio" is sent (legacy), fall back to that.
+    profile_fields = {col: data.get(col, "") for col in TEXT_COLUMNS}
+    profile_text   = " ".join(
+        str(v).strip() for v in profile_fields.values() if v and str(v).strip()
+    )
+
+    # Fallback: if nothing useful came from profile fields, try bare "bio"
+    if not profile_text.strip():
+        profile_text = data.get("bio", "")
+
+    # Validate using the combined text (treated as "bio" for validation purposes)
+    is_valid, error_code, message = validate_bio(profile_text)
     if not is_valid:
         return jsonify({"error": message, "code": error_code}), 422
 
-    mbti, confidences = predict(bio, _vectorizer, _models, _encoders)
-    explanations      = explain(bio, _vectorizer, _models, _encoders)
+    mbti, confidences = predict(profile_text, _vectorizer, _models, _encoders)
+    explanations      = explain(profile_text, _vectorizer, _models, _encoders)
 
     traits_out = {
         trait: {
@@ -503,10 +534,22 @@ def predict_route():
         for trait, (letter, conf) in confidences.items()
     }
 
+    # ── Include parsed metadata in response ───────────────────────────────────
+    meta = {
+        "location":           data.get("location") or None,
+        "age":                safe_int(data.get("age")),
+        "birthdate":          parse_birthdate(data.get("birthdate")),
+        "horoscope_sign":     data.get("horoscope_sign") or None,
+        "relationship_goal":  data.get("relationship_goal") or None,
+        "communication_style": data.get("communication_style") or None,
+        "social_preference":  data.get("social_preference") or None,
+    }
+
     return jsonify({
         "type":    mbti,
         "traits":  traits_out,
-        "warning": get_warning(bio),
+        "warning": get_warning(profile_text),
+        "meta":    meta,
     }), 200
 
 
@@ -517,7 +560,7 @@ def health():
 
 
 # ──────────────────────────────────────────────
-# MAIN — choose mode via CLI arg
+# MAIN
 #
 #   python app.py          → train + save model, then start web server
 #   python app.py --train  → train + save model only (no server)
@@ -548,13 +591,23 @@ def main():
     df = pd.read_excel(DATA_PATH)
     print(f"Dataset shape: {df.shape}")
 
+    # Normalise column names (strip whitespace, lowercase)
+    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
+
     print("\nMBTI Distribution:")
     print(df['mbti_type'].value_counts().to_string())
 
+    # Derive per-trait labels from mbti_type
     df['IE'] = df['mbti_type'].str[0]
     df['NS'] = df['mbti_type'].str[1]
     df['TF'] = df['mbti_type'].str[2]
     df['JP'] = df['mbti_type'].str[3]
+
+    # Report which TEXT_COLUMNS are present vs. missing
+    present_cols = [c for c in TEXT_COLUMNS if c in df.columns]
+    missing_cols = [c for c in TEXT_COLUMNS if c not in df.columns]
+    if missing_cols:
+        print(f"\n  Note: These TEXT_COLUMNS are not in the dataset and will be skipped: {missing_cols}")
 
     print("\nCombining text fields...")
     df['profile_text'] = df.apply(combine_profile, axis=1).apply(light_clean)
@@ -579,7 +632,7 @@ def main():
         print("\nTraining complete. Run 'python app.py --serve' to start the web server.")
         return
 
-    # ── DEFAULT: train then start server immediately ───────
+    # ── DEFAULT: train then start server ───────
     print("\nStarting web server → http://localhost:5000")
     flask_app.run(debug=False, port=5000)
 

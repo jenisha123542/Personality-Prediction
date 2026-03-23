@@ -4,44 +4,56 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Persona — MBTI Bio Predictor</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #F7F6F3;
-      --surface:   #FFFFFF;
-      --border:    #E4E2DC;
-      --border-md: #C9C7BF;
-      --text-1:    #1A1A18;
-      --text-2:    #6B6960;
-      --text-3:    #A8A69E;
-      --accent-bg: #F0EFE9;
-      --green:     #1D7A5F;
-      --green-bg:  #EAF5F1;
-      --green-bd:  #B8DDD4;
-      --amber:     #92580A;
-      --amber-bg:  #FDF3E3;
-      --red:       #C0392B;
-      --red-bg:    #FDECEA;
-      --red-bd:    #F5C6C2;
-      --radius:    10px;
-      --radius-lg: 16px;
+      --ink:        #0E0D0B;
+      --ink-2:      #3A3830;
+      --ink-3:      #7A786E;
+      --ink-4:      #B0AEA6;
+      --paper:      #F5F3EE;
+      --paper-2:    #EDEAE3;
+      --paper-3:    #E2DFD7;
+      --rule:       #D8D5CC;
+      --rule-md:    #B8B4AA;
+      --cream:      #FAF8F4;
 
-      /* trait highlight colors — one per dimension */
-      --ie-bg: #EEF2FF; --ie-bd: #C7D2FE; --ie-tx: #3730A3;
-      --ns-bg: #F0FDF4; --ns-bd: #BBF7D0; --ns-tx: #166534;
-      --tf-bg: #FFF7ED; --tf-bd: #FED7AA; --tf-tx: #9A3412;
-      --jp-bg: #FDF4FF; --jp-bd: #E9D5FF; --jp-tx: #6B21A8;
+      --gold:       #B8860B;
+      --gold-lt:    #F5E9C8;
+      --gold-bd:    #D4A843;
+
+      --ie-tx: #1B3A6B; --ie-bg: #E8EEF8; --ie-bd: #A8BCD8;
+      --ns-tx: #1A4A2E; --ns-bg: #E8F4EC; --ns-bd: #8ABDA0;
+      --tf-tx: #5C1A0A; --tf-bg: #F8EDE8; --tf-bd: #D4907A;
+      --jp-tx: #3D1A5C; --jp-bg: #F0E8F8; --jp-bd: #B89CD4;
+
+      --radius:    8px;
+      --radius-lg: 14px;
     }
 
+    html { scroll-behavior: smooth; }
+
     body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text-1);
+      font-family: 'IBM Plex Sans', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+    }
+
+    /* ── GRAIN OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-size: 128px 128px;
     }
 
     /* ── NAV ── */
@@ -49,304 +61,875 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 2rem;
-      height: 56px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
+      padding: 0 2.5rem;
+      height: 60px;
+      background: var(--ink);
       position: sticky;
       top: 0;
-      z-index: 10;
-    }
-    .nav-logo { font-size: 15px; font-weight: 500; letter-spacing: -0.3px; }
-    .nav-logo span { color: var(--text-3); font-weight: 300; }
-    .nav-badge {
-      font-size: 11px;
-      font-family: 'DM Mono', monospace;
-      color: var(--text-3);
-      background: var(--accent-bg);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 3px 10px;
+      z-index: 100;
     }
 
-    /* ── LAYOUT ── */
+    .nav-wordmark {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .nav-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--paper);
+      letter-spacing: -0.3px;
+    }
+    .nav-slash {
+      color: var(--ink-3);
+      font-size: 14px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+    }
+
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .nav-stat {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--ink-4);
+    }
+    .nav-stat-val {
+      color: var(--gold-bd);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--ink-3); }
+
+    /* ── HERO ── */
+    .hero {
+      background: var(--ink);
+      border-bottom: 1px solid #2A2820;
+      padding: 4rem 2.5rem 3.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 70% 50%, rgba(184,134,11,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .hero-eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-bd);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      display: block;
+      width: 24px;
+      height: 1px;
+      background: var(--gold-bd);
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 700;
+      color: var(--paper);
+      line-height: 1.12;
+      letter-spacing: -1px;
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--gold-bd);
+    }
+    .hero-sub {
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--ink-3);
+      line-height: 1.65;
+      max-width: 520px;
+    }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: flex;
+      gap: 0;
+      border-top: 1px solid #2A2820;
+      margin-top: 2.5rem;
+    }
+    .stat-item {
+      flex: 1;
+      padding: 1.25rem 0;
+      border-right: 1px solid #2A2820;
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--paper);
+      letter-spacing: -0.5px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-num span { color: var(--gold-bd); }
+    .stat-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--ink-3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ── MAIN ── */
     main {
       flex: 1;
+      padding: 2.5rem 2.5rem 5rem;
+      max-width: 720px;
+      width: 100%;
+      margin: 0 auto;
       display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 3rem 1.5rem 5rem;
+      flex-direction: column;
+      gap: 1.5rem;
     }
-    .container { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 1.25rem; }
 
-    /* ── HEADER ── */
-    .header { text-align: center; padding: 0.5rem 0 0.25rem; }
-    .header h1 { font-size: 26px; font-weight: 500; letter-spacing: -0.5px; margin-bottom: 8px; }
-    .header p { font-size: 14px; color: var(--text-2); line-height: 1.6; font-weight: 300; }
-
-    /* ── CARD ── */
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; }
+    /* ── PANEL ── */
+    .panel {
+      background: var(--cream);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--rule);
+      background: var(--paper-2);
+    }
+    .panel-head-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .panel-body { padding: 1.5rem; }
 
     /* ── INPUT ── */
-    .input-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
-    .input-label { font-size: 13px; font-weight: 500; }
-    .word-count { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text-3); transition: color 0.2s; }
-    .word-count.warn { color: var(--amber); }
-    .word-count.good { color: var(--green); }
+    .input-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .input-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-2);
+    }
+    .word-count {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--ink-4);
+      transition: color 0.2s;
+    }
+    .word-count.warn  { color: #C17A1A; }
+    .word-count.good  { color: var(--ns-tx); }
 
     textarea {
-      width: 100%; min-height: 130px; resize: vertical;
-      border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 12px 14px; font-size: 14px; font-family: 'DM Sans', sans-serif;
-      font-weight: 300; color: var(--text-1); background: var(--bg);
-      line-height: 1.65; outline: none; transition: border-color 0.15s, background 0.15s;
+      width: 100%;
+      min-height: 140px;
+      resize: vertical;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-size: 14px;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 300;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.7;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    textarea::placeholder { color: var(--text-3); }
-    textarea:focus { border-color: var(--border-md); background: var(--surface); }
-    textarea.input-error { border-color: var(--red); }
+    textarea::placeholder { color: var(--ink-4); font-style: italic; }
+    textarea:focus {
+      border-color: var(--rule-md);
+      box-shadow: 0 0 0 3px rgba(180,170,150,0.12);
+    }
+    textarea.input-error { border-color: var(--tf-bd); }
 
-    .val-msg { display: none; font-size: 12px; margin-top: 7px; padding: 7px 11px; border-radius: 6px; line-height: 1.5; }
-    .val-msg.error   { display: block; background: var(--red-bg);   color: var(--red);   }
-    .val-msg.warning { display: block; background: var(--amber-bg); color: var(--amber); }
-    .val-msg.success { display: block; background: var(--green-bg); color: var(--green); }
+    .val-msg {
+      display: none;
+      font-size: 12px;
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      line-height: 1.5;
+      border-left: 3px solid;
+    }
+    .val-msg.error   { display: block; background: var(--tf-bg);  color: var(--tf-tx);  border-left-color: var(--tf-bd);  }
+    .val-msg.warning { display: block; background: var(--gold-lt); color: var(--gold);   border-left-color: var(--gold-bd); }
+    .val-msg.success { display: block; background: var(--ns-bg);   color: var(--ns-tx);  border-left-color: var(--ns-bd);  }
 
     /* ── EXAMPLES ── */
-    .examples { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
-    .examples-label { font-size: 12px; color: var(--text-3); }
+    .examples {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .examples-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--ink-4);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
     .ex-pill {
-      font-size: 12px; color: var(--text-2); background: var(--accent-bg);
-      border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px;
-      cursor: pointer; transition: border-color 0.15s, color 0.15s; user-select: none;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--ink-2);
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      user-select: none;
     }
-    .ex-pill:hover { border-color: var(--border-md); color: var(--text-1); }
+    .ex-pill:hover {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
 
-    /* ── BUTTONS ── */
-    .btn {
-      width: 100%; margin-top: 14px; padding: 11px;
-      background: var(--text-1); color: #fff;
-      font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif;
-      border: none; border-radius: var(--radius); cursor: pointer;
+    /* ── SUBMIT BTN ── */
+    .btn-analyze {
+      width: 100%;
+      margin-top: 16px;
+      padding: 13px;
+      background: var(--ink);
+      color: var(--paper);
+      font-size: 13px;
+      font-weight: 500;
+      font-family: 'IBM Plex Sans', sans-serif;
+      letter-spacing: 0.04em;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       transition: opacity 0.15s, transform 0.1s;
+      position: relative;
+      overflow: hidden;
     }
-    .btn:hover:not(:disabled) { opacity: 0.85; }
-    .btn:active:not(:disabled) { transform: scale(0.99); }
-    .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-analyze::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 50%);
+    }
+    .btn-analyze:hover:not(:disabled) { opacity: 0.88; }
+    .btn-analyze:active:not(:disabled) { transform: scale(0.993); }
+    .btn-analyze:disabled { opacity: 0.28; cursor: not-allowed; }
+    .btn-icon { font-size: 14px; }
 
-    .btn-ghost {
-      width: 100%; margin-top: 12px; padding: 10px;
-      background: transparent; color: var(--text-2);
-      font-size: 13px; font-family: 'DM Sans', sans-serif;
-      border: 1px solid var(--border); border-radius: var(--radius);
-      cursor: pointer; transition: border-color 0.15s, color 0.15s;
+    .btn-reset {
+      width: 100%;
+      margin-top: 14px;
+      padding: 11px;
+      background: transparent;
+      color: var(--ink-3);
+      font-size: 13px;
+      font-family: 'IBM Plex Sans', sans-serif;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
     }
-    .btn-ghost:hover { border-color: var(--border-md); color: var(--text-1); }
+    .btn-reset:hover { border-color: var(--rule-md); color: var(--ink); }
 
     /* ── API ERROR ── */
     .api-error {
-      display: none; margin-top: 10px;
-      background: var(--red-bg); border: 1px solid var(--red-bd);
-      border-radius: var(--radius); padding: 10px 14px;
-      font-size: 13px; color: var(--red); line-height: 1.5;
+      display: none;
+      margin-top: 10px;
+      background: var(--tf-bg);
+      border: 1px solid var(--tf-bd);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--tf-tx);
+      line-height: 1.5;
     }
     .api-error.show { display: block; }
 
     /* ── LOADING ── */
-    .loading { display: none; align-items: center; justify-content: center; gap: 10px; padding: 2.5rem 0; color: var(--text-2); font-size: 13px; font-weight: 300; }
-    .loading.show { display: flex; }
-    .spinner { width: 18px; height: 18px; border: 1.5px solid var(--border); border-top-color: var(--text-2); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+    .loading {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 4rem 2rem;
+      background: var(--cream);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-lg);
+    }
+    .loading.show { display: flex; animation: fadeUp 0.2s ease; }
+    .loading-ring {
+      width: 40px;
+      height: 40px;
+      border: 1.5px solid var(--rule);
+      border-top-color: var(--ink-2);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    .loading-text {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── RESULT ── */
     .result { display: none; }
-    .result.show { display: block; animation: fadeUp 0.3s ease; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .result.show { display: flex; flex-direction: column; gap: 1.5rem; animation: fadeUp 0.35s ease; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .result-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
-    .mbti-type { font-size: 44px; font-weight: 500; letter-spacing: -1.5px; line-height: 1; }
-    .mbti-role { font-size: 11px; color: var(--text-3); font-weight: 400; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
-    .mbti-name { font-size: 16px; font-weight: 500; margin-top: 2px; }
-    .conf-chip { flex-shrink: 0; font-size: 12px; font-family: 'DM Mono', monospace; background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bd); border-radius: 20px; padding: 4px 12px; margin-top: 4px; }
-
-    .divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
-
-    .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); margin-bottom: 12px; }
-
-    /* ── TRAIT ROWS ── */
-    .trait-row { margin-bottom: 14px; }
-    .trait-header { display: grid; grid-template-columns: 70px 1fr 44px; align-items: center; gap: 10px; margin-bottom: 5px; }
-    .trait-left { display: flex; align-items: center; gap: 6px; }
-    .trait-letter { font-size: 13px; font-weight: 500; font-family: 'DM Mono', monospace; width: 14px; text-align: center; }
-    .trait-name { font-size: 12px; color: var(--text-3); }
-    .trait-bar-bg { height: 4px; background: var(--border); border-radius: 3px; overflow: hidden; }
-    .trait-bar-fill { height: 100%; background: var(--text-1); border-radius: 3px; width: 0%; transition: width 0.75s cubic-bezier(0.4,0,0.2,1); }
-    .trait-conf { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text-3); text-align: right; }
-
-    /* ── KEY WORDS CHIPS ── */
-    .trait-words { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; padding-left: 20px; }
-    .word-chip {
-      font-size: 11px;
-      font-family: 'DM Mono', monospace;
+    /* ── TYPE HEADER PANEL ── */
+    .type-panel {
+      background: var(--ink);
+      border: 1px solid #2A2820;
+      border-radius: var(--radius-lg);
+      padding: 2rem 2rem 1.75rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .type-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 80% at 90% 10%, rgba(184,134,11,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .type-overline {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-bd);
+      margin-bottom: 0.75rem;
+    }
+    .type-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .type-left {}
+    .type-code {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(52px, 10vw, 72px);
+      font-weight: 700;
+      color: var(--paper);
+      letter-spacing: -2px;
+      line-height: 0.9;
+    }
+    .type-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-style: italic;
+      color: var(--ink-4);
+      margin-top: 8px;
+    }
+    .type-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      padding-bottom: 4px;
+    }
+    .type-role-chip {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-bd);
+      border: 1px solid rgba(212,168,67,0.3);
       border-radius: 4px;
-      padding: 2px 7px;
+      padding: 4px 10px;
+      background: rgba(212,168,67,0.08);
+    }
+    .type-conf-chip {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--paper);
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+      padding: 5px 12px;
+    }
+
+    .type-divider {
+      height: 1px;
+      background: #2A2820;
+      margin: 1.5rem 0;
+    }
+
+    .type-desc {
+      font-size: 13px;
+      color: var(--ink-3);
+      line-height: 1.75;
+      font-weight: 300;
+      font-style: italic;
+    }
+
+    /* ── WARNING BANNER ── */
+    .warning-banner {
+      display: none;
+      font-size: 12px;
+      padding: 9px 13px;
+      background: var(--gold-lt);
+      color: var(--gold);
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      border-left: 3px solid var(--gold-bd);
+      line-height: 1.5;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .warning-banner.show { display: block; }
+
+    /* ── TRAIT SECTION ── */
+    .section-eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-4);
+      margin-bottom: 1.25rem;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .trait-grid { display: flex; flex-direction: column; gap: 16px; }
+
+    .trait-row {}
+    .trait-header {
+      display: grid;
+      grid-template-columns: 90px 1fr 52px;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 7px;
+    }
+    .trait-left { display: flex; align-items: center; gap: 8px; }
+    .trait-letter {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      font-weight: 600;
+      width: 16px;
+    }
+    .trait-name { font-size: 11px; color: var(--ink-3); font-weight: 300; }
+
+    .trait-bar-bg {
+      height: 3px;
+      background: var(--rule);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .trait-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.9s cubic-bezier(0.4,0,0.2,1);
+    }
+    .trait-bar-fill.ie { background: var(--ie-tx); }
+    .trait-bar-fill.ns { background: var(--ns-tx); }
+    .trait-bar-fill.tf { background: var(--tf-tx); }
+    .trait-bar-fill.jp { background: var(--jp-tx); }
+
+    .trait-conf {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--ink-3);
+      text-align: right;
+    }
+
+    .trait-chips { display: flex; gap: 5px; flex-wrap: wrap; padding-left: 26px; margin-top: 6px; }
+    .word-chip {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.03em;
+      padding: 2px 8px;
+      border-radius: 3px;
       border: 1px solid;
-      cursor: default;
     }
     .word-chip.ie { background: var(--ie-bg); border-color: var(--ie-bd); color: var(--ie-tx); }
     .word-chip.ns { background: var(--ns-bg); border-color: var(--ns-bd); color: var(--ns-tx); }
     .word-chip.tf { background: var(--tf-bg); border-color: var(--tf-bd); color: var(--tf-tx); }
     .word-chip.jp { background: var(--jp-bg); border-color: var(--jp-bd); color: var(--jp-tx); }
 
-    /* ── HIGHLIGHTED BIO ── */
-    .bio-highlight-section {
-      margin-top: 1rem;
-      background: var(--bg);
-      border: 1px solid var(--border);
+    /* ── BIO HIGHLIGHT ── */
+    .bio-box {
+      background: var(--paper);
+      border: 1px solid var(--rule);
       border-radius: var(--radius);
-      padding: 1rem 1.25rem;
+      padding: 1.25rem 1.5rem;
+      font-size: 13.5px;
+      font-weight: 300;
+      line-height: 1.85;
+      color: var(--ink-2);
     }
-    .why-header { margin-bottom: 10px; }
-    .why-subtext { font-size: 12px; color: var(--text-3); font-weight: 300; line-height: 1.5; margin-top: 3px; }
-    .bio-highlight-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); margin-bottom: 10px; }
-    .bio-highlight-box {
-      font-size: 13px; line-height: 1.85; font-weight: 300;
-      color: var(--text-2); background: var(--bg);
-      border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 14px 16px;
-    }
-    .bio-highlight-box mark {
+    .bio-box mark {
       background: none;
-      border-radius: 3px;
+      border-radius: 2px;
       padding: 1px 3px;
-      font-weight: 500;
+      font-weight: 400;
     }
-    .bio-highlight-box mark.ie { background: var(--ie-bg); color: var(--ie-tx); border-bottom: 2px solid var(--ie-bd); }
-    .bio-highlight-box mark.ns { background: var(--ns-bg); color: var(--ns-tx); border-bottom: 2px solid var(--ns-bd); }
-    .bio-highlight-box mark.tf { background: var(--tf-bg); color: var(--tf-tx); border-bottom: 2px solid var(--tf-bd); }
-    .bio-highlight-box mark.jp { background: var(--jp-bg); color: var(--jp-tx); border-bottom: 2px solid var(--jp-bd); }
+    .bio-box mark.ie { background: var(--ie-bg); color: var(--ie-tx); border-bottom: 1.5px solid var(--ie-bd); }
+    .bio-box mark.ns { background: var(--ns-bg); color: var(--ns-tx); border-bottom: 1.5px solid var(--ns-bd); }
+    .bio-box mark.tf { background: var(--tf-bg); color: var(--tf-tx); border-bottom: 1.5px solid var(--tf-bd); }
+    .bio-box mark.jp { background: var(--jp-bg); color: var(--jp-tx); border-bottom: 1.5px solid var(--jp-bd); }
 
-    /* ── LEGEND ── */
-    .legend { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-2); }
-    .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-    .legend-dot.ie { background: var(--ie-bd); }
-    .legend-dot.ns { background: var(--ns-bd); }
-    .legend-dot.tf { background: var(--tf-bd); }
-    .legend-dot.jp { background: var(--jp-bd); }
-
-    /* ── DESCRIPTION ── */
-    .mbti-desc { font-size: 13px; color: var(--text-2); line-height: 1.7; font-weight: 300; padding-top: 0.25rem; }
+    .legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-3); font-family: 'IBM Plex Mono', monospace; }
+    .legend-swatch { width: 10px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+    .legend-swatch.ie { background: var(--ie-tx); }
+    .legend-swatch.ns { background: var(--ns-tx); }
+    .legend-swatch.tf { background: var(--tf-tx); }
+    .legend-swatch.jp { background: var(--jp-tx); }
 
     /* ── MATCHES ── */
-    .match-pills { display: flex; gap: 6px; flex-wrap: wrap; }
-    .match-pill { font-size: 12px; font-family: 'DM Mono', monospace; font-weight: 500; background: var(--accent-bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; }
+    .match-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .match-pill {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink);
+      background: var(--paper);
+      border: 1px solid var(--rule-md);
+      border-radius: var(--radius);
+      padding: 7px 14px;
+      letter-spacing: 0.03em;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .match-pill:hover {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
 
-    /* ── WARNING BANNER ── */
-    .warning-banner { display: none; font-size: 12px; padding: 8px 12px; background: var(--amber-bg); color: var(--amber); border-radius: 6px; margin-bottom: 1rem; line-height: 1.5; }
-    .warning-banner.show { display: block; }
+    /* ── MODEL ACCURACY TABLE ── */
+    .accuracy-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+    }
+    .accuracy-table th {
+      text-align: left;
+      padding: 7px 8px;
+      color: var(--ink-4);
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--rule);
+      font-size: 10px;
+    }
+    .accuracy-table td {
+      padding: 8px 8px;
+      border-bottom: 1px solid var(--paper-3);
+      color: var(--ink-2);
+    }
+    .accuracy-table tr:last-child td { border-bottom: none; }
+    .accuracy-table tr.best td { background: var(--ns-bg); color: var(--ns-tx); }
+    .accuracy-table .best-mark { color: var(--ns-tx); font-size: 10px; }
+    .acc-bar-cell { width: 120px; }
+    .acc-mini-bar {
+      height: 3px;
+      border-radius: 2px;
+      background: var(--rule);
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .acc-mini-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--ns-tx);
+      transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    }
+    .acc-mini-fill.dim { background: var(--ink-4); }
 
     /* ── FOOTER ── */
-    footer { text-align: center; padding: 1.25rem; font-size: 12px; color: var(--text-3); border-top: 1px solid var(--border); background: var(--surface); }
+    footer {
+      background: var(--ink);
+      border-top: 1px solid #2A2820;
+      padding: 1.25rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .footer-left {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--ink-3);
+    }
+    .footer-left span { color: var(--gold-bd); }
+    .footer-right {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--ink-3);
+      letter-spacing: 0.05em;
+    }
 
-    @media (max-width: 480px) {
-      main { padding: 1.5rem 1rem 4rem; }
-      .mbti-type { font-size: 36px; }
-      nav { padding: 0 1rem; }
-      .trait-header { grid-template-columns: 60px 1fr 38px; }
+    @media (max-width: 560px) {
+      nav { padding: 0 1.25rem; }
+      .hero { padding: 2.5rem 1.25rem 2rem; }
+      main { padding: 1.5rem 1.25rem 4rem; }
+      .stats-row { flex-direction: column; gap: 0; }
+      .stat-item { border-right: none; border-bottom: 1px solid #2A2820; padding: 0.9rem 0; }
+      .stat-item:last-child { border-bottom: none; }
+      .type-panel { padding: 1.5rem; }
+      footer { flex-direction: column; align-items: flex-start; padding: 1rem 1.25rem; }
+      .accuracy-table { font-size: 10px; }
+      .accuracy-table th, .accuracy-table td { padding: 6px 5px; }
+      .acc-bar-cell { display: none; }
     }
   </style>
 </head>
 <body>
 
+<!-- ── NAV ── -->
 <nav>
-  <span class="nav-logo">Persona <span>/ MBTI predictor</span></span>
-  <span class="nav-badge">91.4% accuracy</span>
+  <div class="nav-wordmark">
+    <span class="nav-title">Persona</span>
+    <span class="nav-slash">/ mbti predictor</span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-stat">
+      accuracy <span class="nav-stat-val">92.25%</span>
+    </span>
+    <span class="nav-dot"></span>
+    <span class="nav-stat">LinearSVC · 5-fold CV</span>
+  </div>
 </nav>
 
-<main>
-  <div class="container">
-
-    <div class="header">
-      <h1>What does your bio say about you?</h1>
-      <p>Paste a dating profile bio — get your MBTI personality type and see exactly which words drove the prediction.</p>
-    </div>
-
-    <!-- INPUT CARD -->
-    <div class="card" id="input-card">
-      <div class="input-header">
-        <span class="input-label">Profile bio</span>
-        <span class="word-count" id="word-count">0 words</span>
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">MBTI Personality Analysis</div>
+    <h1>What does your profile<br><em>actually</em> reveal?</h1>
+    <p class="hero-sub">Paste a dating profile or bio — our model reads the language patterns and surfaces your MBTI type, trait confidence scores, and the exact words that drove each prediction.</p>
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-num">92<span>.25%</span></div>
+        <div class="stat-label">MBTI accuracy</div>
       </div>
+      <div class="stat-item">
+        <div class="stat-num">97<span>.87%</span></div>
+        <div class="stat-label">Trait accuracy</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">3<span>,199</span></div>
+        <div class="stat-label">Training profiles</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">16</div>
+        <div class="stat-label">MBTI types</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<main>
+
+  <!-- INPUT PANEL -->
+  <div class="panel" id="input-card">
+    <div class="panel-head">
+      <span class="panel-head-label">Input — Profile Bio</span>
+      <span class="word-count" id="word-count">0 words</span>
+    </div>
+    <div class="panel-body">
       <textarea
         id="bio-input"
-        placeholder="Write about yourself — your hobbies, how you spend your weekends, what you value in a partner, what makes you tick..."
+        placeholder="Describe yourself — your hobbies, how you spend your time, what you value, how you think, what energizes or drains you…"
         oninput="onType()"
       ></textarea>
       <div class="val-msg" id="val-msg"></div>
       <div class="examples">
-        <span class="examples-label">Try:</span>
+        <span class="examples-label">Try →</span>
         <span class="ex-pill" onclick="fillExample(0)">Introvert</span>
         <span class="ex-pill" onclick="fillExample(1)">Extrovert</span>
         <span class="ex-pill" onclick="fillExample(2)">Analyst</span>
         <span class="ex-pill" onclick="fillExample(3)">Caregiver</span>
       </div>
-      <button class="btn" id="submit-btn" disabled onclick="analyze()">Analyze personality</button>
+      <button class="btn-analyze" id="submit-btn" disabled onclick="analyze()">
+        <span class="btn-icon">⟶</span> Analyze personality
+      </button>
       <div class="api-error" id="api-error"></div>
     </div>
+  </div>
 
-    <!-- LOADING -->
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <span>Analyzing profile...</span>
+  <!-- LOADING -->
+  <div class="loading" id="loading">
+    <div class="loading-ring"></div>
+    <span class="loading-text">Analyzing language patterns</span>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result" id="result-card">
+
+    <!-- WARNING -->
+    <div class="warning-banner" id="warning-banner"></div>
+
+    <!-- TYPE PANEL -->
+    <div class="type-panel">
+      <div class="type-overline">Predicted type</div>
+      <div class="type-row">
+        <div class="type-left">
+          <div class="type-code" id="r-type">INTJ</div>
+          <div class="type-name" id="r-name">The Architect</div>
+        </div>
+        <div class="type-right">
+          <span class="type-role-chip" id="r-role">Analyst</span>
+          <span class="type-conf-chip" id="r-conf">avg 84.2%</span>
+        </div>
+      </div>
+      <div class="type-divider"></div>
+      <p class="type-desc" id="r-desc"></p>
     </div>
 
-    <!-- RESULT CARD -->
-    <div class="card result" id="result-card">
-      <div class="warning-banner" id="warning-banner"></div>
-
-      <div class="result-top">
-        <div>
-          <div class="mbti-type" id="r-type">INTJ</div>
-          <div class="mbti-role" id="r-role">Analyst</div>
-          <div class="mbti-name" id="r-name">The Architect</div>
-        </div>
-        <span class="conf-chip" id="r-conf">avg 84.2%</span>
+    <!-- TRAIT BARS -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-head-label">Trait confidence</span>
       </div>
+      <div class="panel-body">
+        <div class="trait-grid" id="trait-bars"></div>
+      </div>
+    </div>
 
-      <p class="mbti-desc" id="r-desc"></p>
-
-      <div class="divider"></div>
-
-      <!-- TRAIT BARS + KEY WORDS -->
-      <p class="section-label">Trait confidence & key words</p>
-      <div id="trait-bars"></div>
-
-      <!-- HIGHLIGHTED BIO -->
-      <div class="bio-highlight-section" id="bio-highlight-section">
-        <div class="why-header">
-          <p class="section-label" style="margin-bottom:4px">Why this result</p>
-          <p class="why-subtext">Words highlighted below are what drove each trait prediction. The model found these most significant in your bio.</p>
-        </div>
-        <div class="bio-highlight-box" id="bio-highlight-box"></div>
+    <!-- BIO HIGHLIGHT -->
+    <div class="panel" id="bio-highlight-section">
+      <div class="panel-head">
+        <span class="panel-head-label">Why this result — key signals</span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:12px;color:var(--ink-3);font-weight:300;margin-bottom:14px;line-height:1.6;">
+          Highlighted words are what the model weighted most for each trait dimension.
+        </p>
+        <div class="bio-box" id="bio-highlight-box"></div>
         <div class="legend" id="legend"></div>
       </div>
-
-      <div class="divider"></div>
-
-      <p class="section-label" style="margin-bottom:8px">Best matches</p>
-      <div class="match-pills" id="match-pills"></div>
-
-      <button class="btn-ghost" onclick="reset()">Analyze another bio</button>
     </div>
 
+    <!-- MATCHES -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-head-label">Best type matches</span>
+      </div>
+      <div class="panel-body">
+        <div class="match-row" id="match-pills"></div>
+      </div>
+    </div>
+
+    <!-- MODEL ACCURACY TABLE -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-head-label">Model comparison — 5-fold CV results</span>
+      </div>
+      <div class="panel-body">
+        <table class="accuracy-table" id="model-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>MBTI %</th>
+              <th>±Std</th>
+              <th>Trait %</th>
+              <th class="acc-bar-cell"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="best">
+              <td>LinearSVC <span class="best-mark">◄</span></td>
+              <td>92.25%</td><td>±0.60%</td><td>97.87%</td>
+              <td class="acc-bar-cell"><div class="acc-mini-bar"><div class="acc-mini-fill" data-w="92.25"></div></div></td>
+            </tr>
+            <tr>
+              <td>LinearSVC C0.5</td>
+              <td>91.37%</td><td>±0.73%</td><td>97.64%</td>
+              <td class="acc-bar-cell"><div class="acc-mini-bar"><div class="acc-mini-fill dim" data-w="91.37"></div></div></td>
+            </tr>
+            <tr>
+              <td>RandomForest</td>
+              <td>87.96%</td><td>±0.99%</td><td>96.69%</td>
+              <td class="acc-bar-cell"><div class="acc-mini-bar"><div class="acc-mini-fill dim" data-w="87.96"></div></div></td>
+            </tr>
+            <tr>
+              <td>LinearSVC C0.1</td>
+              <td>86.93%</td><td>±0.41%</td><td>96.32%</td>
+              <td class="acc-bar-cell"><div class="acc-mini-bar"><div class="acc-mini-fill dim" data-w="86.93"></div></div></td>
+            </tr>
+            <tr>
+              <td>LogisticRegr.</td>
+              <td>86.46%</td><td>±0.38%</td><td>96.20%</td>
+              <td class="acc-bar-cell"><div class="acc-mini-bar"><div class="acc-mini-fill dim" data-w="86.46"></div></div></td>
+            </tr>
+            <tr>
+              <td>ComplementNB</td>
+              <td>80.49%</td><td>±1.22%</td><td>94.31%</td>
+              <td class="acc-bar-cell"><div class="acc-mini-bar"><div class="acc-mini-fill dim" data-w="80.49"></div></div></td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="font-size:10px;color:var(--ink-4);font-family:'IBM Plex Mono',monospace;margin-top:14px;letter-spacing:0.05em;">
+          Trait breakdown — IE: 98.91% &nbsp;·&nbsp; NS: 99.19% &nbsp;·&nbsp; TF: 97.22% &nbsp;·&nbsp; JP: 96.19%
+        </p>
+      </div>
+    </div>
+
+    <button class="btn-reset" onclick="reset()">← Analyze another bio</button>
   </div>
+
 </main>
 
+<!-- ── FOOTER ── -->
 <footer>
-  Built with Python · scikit-learn · TF-IDF · LinearSVC &nbsp;·&nbsp; 5-fold cross-validated
+  <span class="footer-left">Persona &nbsp;·&nbsp; <span>scikit-learn</span> · TF-IDF · LinearSVC · Flask</span>
+  <span class="footer-right">3,199 profiles · 5-fold stratified CV · MBTI 92.25%</span>
 </footer>
 
 <script>
-// ── MBTI METADATA ─────────────────────────────────────────────────────────
+// ── MBTI METADATA ──────────────────────────────────────────────────────────
 const MBTI = {
   INTJ: { role:"Analyst",  name:"The Architect",    desc:"Strategic and independent, INTJs combine vision with precision. They set high standards and thrive on turning complex problems into elegant solutions. In a partner they seek depth, intellectual honesty, and quiet ambition.", matches:["ENFP","ENTP","INFJ"] },
   INTP: { role:"Analyst",  name:"The Thinker",      desc:"Curious and logical, INTPs are endlessly fascinated by ideas and systems. They value truth above comfort and bring quiet intensity to everything they care about. They seek a partner who matches their intellectual curiosity.", matches:["ENTJ","ENFJ","INFJ"] },
@@ -368,9 +951,8 @@ const MBTI = {
 
 const TRAIT_LABELS = { IE:["Introvert","Extravert"], NS:["Intuitive","Sensing"], TF:["Thinking","Feeling"], JP:["Judging","Perceiving"] };
 const TRAIT_CLASS  = { IE:"ie", NS:"ns", TF:"tf", JP:"jp" };
-const TRAIT_NAMES  = { IE:"I/E", NS:"N/S", TF:"T/F", JP:"J/P" };
 
-// ── EXAMPLE BIOS ──────────────────────────────────────────────────────────
+// ── EXAMPLES ─────────────────────────────────────────────────────────────
 const EXAMPLES = [
   "I'm a homebody who genuinely loves deep one-on-one conversations over coffee. Weekends are for books, slow mornings, and the occasional long solo walk. I'm not great at small talk but I'll remember your favorite film and ask about it months later. Looking for someone who values depth over drama and is not afraid of a little quiet.",
   "Life's too short to stay in one place. I'm always planning the next trip, hosting game nights, or convincing friends to try a new restaurant on a Tuesday. I thrive on spontaneity and meeting new people energizes me. Looking for someone who can match my energy but also knows when to slow down.",
@@ -392,7 +974,7 @@ function validateBio(bio) {
   if (/(.)\1{6,}/.test(bio))  return {ok:false, type:"error",   msg:"Bio appears to contain repeated characters."};
   if (unique < 6)             return {ok:false, type:"error",   msg:"Bio has too few unique words. Write a more descriptive profile."};
   if (alpha < 0.5)            return {ok:false, type:"error",   msg:"Bio contains too many non-letter characters."};
-  if (wc < MIN_WARN)          return {ok:true,  type:"warning", msg:`Short bio (${wc} words). 20+ words gives more reliable results.`};
+  if (wc < MIN_WARN)          return {ok:true,  type:"warning", msg:`Short bio (${wc} words) — 20+ gives more reliable results.`};
   return {ok:true, type:"success", msg:`${wc} words — ready to analyze.`};
 }
 
@@ -428,14 +1010,15 @@ async function analyze() {
   const bio = document.getElementById('bio-input').value.trim();
   if (!validateBio(bio).ok) return;
 
-  document.getElementById('input-card').style.display  = 'none';
+  document.getElementById('input-card').style.display = 'none';
   document.getElementById('loading').classList.add('show');
   document.getElementById('api-error').classList.remove('show');
   document.getElementById('result-card').classList.remove('show');
 
   try {
     const res  = await fetch('/predict', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
       body: JSON.stringify({bio}),
     });
     const data = await res.json();
@@ -445,7 +1028,7 @@ async function analyze() {
     document.getElementById('loading').classList.remove('show');
     document.getElementById('input-card').style.display = 'block';
     const el = document.getElementById('api-error');
-    el.textContent = err.message || 'Something went wrong. Make sure the Flask server is running.';
+    el.textContent = err.message || 'Something went wrong. Make sure the Flask server is running on localhost:5000.';
     el.classList.add('show');
   }
 }
@@ -455,30 +1038,28 @@ function showResult(data, originalBio) {
   document.getElementById('loading').classList.remove('show');
 
   const type = data.type || "????";
-  const meta = MBTI[type] || {role:"Unknown", name:"Unknown type", desc:"No description.", matches:[]};
+  const meta = MBTI[type] || {role:"Unknown", name:"Unknown type", desc:"No description available.", matches:[]};
 
   document.getElementById('r-type').textContent = type;
   document.getElementById('r-role').textContent = meta.role;
   document.getElementById('r-name').textContent = meta.name;
   document.getElementById('r-desc').textContent = meta.desc;
 
-  // Warning
+  // Warning banner
   const wb = document.getElementById('warning-banner');
-  if (data.warning) { wb.textContent = data.warning; wb.classList.add('show'); }
+  if (data.warning) { wb.textContent = '⚠ ' + data.warning; wb.classList.add('show'); }
   else wb.classList.remove('show');
 
-  // Average confidence
+  // Avg confidence
   const traits = data.traits || {};
   const confs  = Object.values(traits).map(t => t.confidence || 0);
   const avg    = confs.length ? (confs.reduce((a,b)=>a+b,0)/confs.length).toFixed(1) : "—";
   document.getElementById('r-conf').textContent = `avg ${avg}%`;
 
-  // ── Trait bars + word chips ──────────────────
+  // ── Trait bars ───────────────────────────────
   const barsEl = document.getElementById('trait-bars');
   barsEl.innerHTML = '';
-
-  // Collect all top words across traits for bio highlighting
-  const allTopWords = {}; // word → trait class
+  const allTopWords = {};
 
   ['IE','NS','TF','JP'].forEach(trait => {
     const td = traits[trait];
@@ -490,7 +1071,6 @@ function showResult(data, originalBio) {
     const label    = letter === trait[0] ? labelArr[0] : labelArr[1];
     const cls      = TRAIT_CLASS[trait];
 
-    // Register words for highlight (first trait that claimed the word wins)
     topWords.forEach(([w]) => { if (!allTopWords[w]) allTopWords[w] = cls; });
 
     const row = document.createElement('div');
@@ -502,27 +1082,35 @@ function showResult(data, originalBio) {
           <span class="trait-name">${label}</span>
         </div>
         <div class="trait-bar-bg">
-          <div class="trait-bar-fill" data-w="${conf}%"></div>
+          <div class="trait-bar-fill ${cls}" data-w="${conf}"></div>
         </div>
         <span class="trait-conf">${conf.toFixed(1)}%</span>
       </div>
       ${topWords.length ? `
-        <div class="trait-words">
+        <div class="trait-chips">
           ${topWords.map(([w]) => `<span class="word-chip ${cls}">${w}</span>`).join('')}
         </div>` : ''}
     `;
     barsEl.appendChild(row);
   });
 
-  // Animate bars
-  setTimeout(() => {
-    document.querySelectorAll('.trait-bar-fill').forEach(el => { el.style.width = el.dataset.w; });
-  }, 80);
+  // Animate bars after paint
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.querySelectorAll('.trait-bar-fill').forEach(el => {
+        el.style.width = el.dataset.w + '%';
+      });
+      // Animate mini accuracy bars too
+      document.querySelectorAll('.acc-mini-fill').forEach(el => {
+        el.style.width = el.dataset.w + '%';
+      });
+    }, 60);
+  });
 
-  // ── Bio highlighting ─────────────────────────
+  // ── Bio highlight ─────────────────────────────
   buildHighlightedBio(originalBio, allTopWords);
 
-  // ── Best match pills ─────────────────────────
+  // ── Matches ───────────────────────────────────
   document.getElementById('match-pills').innerHTML =
     meta.matches.map(m => `<span class="match-pill">${m}</span>`).join('');
 
@@ -531,31 +1119,21 @@ function showResult(data, originalBio) {
 
 // ── BIO HIGHLIGHTING ───────────────────────────────────────────────────────
 function buildHighlightedBio(bio, wordMap) {
-  // wordMap: { "family": "ie", "organizing": "jp", ... }
-  // We find each key word in the original bio text (case-insensitive)
-  // and wrap it in <mark class="...">
-
   if (!Object.keys(wordMap).length) {
     document.getElementById('bio-highlight-section').style.display = 'none';
     return;
   }
   document.getElementById('bio-highlight-section').style.display = 'block';
 
-  // Sort words longest first so "deep conversations" matches before "deep"
   const sortedWords = Object.keys(wordMap).sort((a, b) => b.length - a.length);
+  const escape      = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  // Escape special regex chars
-  const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-  // Build a map of character index → {end, cls} for non-overlapping replacements
-  let marked = bio;
-  // Replace word by word using a placeholder technique to avoid double-marking
   const placeholders = [];
   let temp = bio;
 
   sortedWords.forEach(word => {
-    const cls  = wordMap[word];
-    const rx   = new RegExp(`\\b${escape(word)}\\b`, 'gi');
+    const cls = wordMap[word];
+    const rx  = new RegExp(`\\b${escape(word)}\\b`, 'gi');
     temp = temp.replace(rx, match => {
       const ph = `\x00${placeholders.length}\x00`;
       placeholders.push(`<mark class="${cls}">${match}</mark>`);
@@ -563,36 +1141,34 @@ function buildHighlightedBio(bio, wordMap) {
     });
   });
 
-  // Escape remaining HTML entities then restore marks
   temp = temp
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/\x00(\d+)\x00/g, (_, i) => placeholders[+i]);
 
   document.getElementById('bio-highlight-box').innerHTML = temp;
 
-  // ── Legend ───────────────────────────────────
-  const usedTraits = [...new Set(Object.values(wordMap))];
-  const traitFull  = {ie:"I/E dimension", ns:"N/S dimension", tf:"T/F dimension", jp:"J/P dimension"};
+  const usedTraits  = [...new Set(Object.values(wordMap))];
+  const traitLabels = {ie:"I/E", ns:"N/S", tf:"T/F", jp:"J/P"};
   document.getElementById('legend').innerHTML = usedTraits.map(cls =>
-    `<span class="legend-item"><span class="legend-dot ${cls}"></span>${traitFull[cls]}</span>`
+    `<span class="legend-item"><span class="legend-swatch ${cls}"></span>${traitLabels[cls]}</span>`
   ).join('');
 }
 
 // ── RESET ──────────────────────────────────────────────────────────────────
 function reset() {
   document.getElementById('result-card').classList.remove('show');
-  document.getElementById('input-card').style.display  = 'block';
-  document.getElementById('bio-input').value           = '';
-  document.getElementById('word-count').textContent    = '0 words';
-  document.getElementById('word-count').className      = 'word-count';
-  document.getElementById('val-msg').className         = 'val-msg';
-  document.getElementById('val-msg').textContent       = '';
-  document.getElementById('submit-btn').disabled       = true;
+  document.getElementById('input-card').style.display = 'block';
+  document.getElementById('bio-input').value          = '';
+  document.getElementById('word-count').textContent   = '0 words';
+  document.getElementById('word-count').className     = 'word-count';
+  document.getElementById('val-msg').className        = 'val-msg';
+  document.getElementById('val-msg').textContent      = '';
+  document.getElementById('submit-btn').disabled      = true;
   document.getElementById('bio-input').classList.remove('input-error');
   document.getElementById('api-error').classList.remove('show');
 }
 
-// ── Ctrl/Cmd+Enter ─────────────────────────────────────────────────────────
+// Ctrl/Cmd+Enter
 document.addEventListener('keydown', e => {
   if ((e.metaKey||e.ctrlKey) && e.key==='Enter') {
     const btn = document.getElementById('submit-btn');
