@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Persona — MBTI Bio Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #F7F6F3;
+      --surface:   #FFFFFF;
+      --border:    #E4E2DC;
+      --border-md: #C9C7BF;
+      --text-1:    #1A1A18;
+      --text-2:    #6B6960;
+      --text-3:    #A8A69E;
+      --accent-bg: #F0EFE9;
+      --green:     #1D7A5F;
+      --green-bg:  #EAF5F1;
+      --green-bd:  #B8DDD4;
+      --amber:     #92580A;
+      --amber-bg:  #FDF3E3;
+      --red:       #C0392B;
+      --red-bg:    #FDECEA;
+      --red-bd:    #F5C6C2;
+      --radius:    10px;
+      --radius-lg: 16px;
+
+      /* trait highlight colors — one per dimension */
+      --ie-bg: #EEF2FF; --ie-bd: #C7D2FE; --ie-tx: #3730A3;
+      --ns-bg: #F0FDF4; --ns-bd: #BBF7D0; --ns-tx: #166534;
+      --tf-bg: #FFF7ED; --tf-bd: #FED7AA; --tf-tx: #9A3412;
+      --jp-bg: #FDF4FF; --jp-bd: #E9D5FF; --jp-tx: #6B21A8;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .nav-logo { font-size: 15px; font-weight: 500; letter-spacing: -0.3px; }
+    .nav-logo span { color: var(--text-3); font-weight: 300; }
+    .nav-badge {
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      color: var(--text-3);
+      background: var(--accent-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+
+    /* ── LAYOUT ── */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 3rem 1.5rem 5rem;
+    }
+    .container { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 1.25rem; }
+
+    /* ── HEADER ── */
+    .header { text-align: center; padding: 0.5rem 0 0.25rem; }
+    .header h1 { font-size: 26px; font-weight: 500; letter-spacing: -0.5px; margin-bottom: 8px; }
+    .header p { font-size: 14px; color: var(--text-2); line-height: 1.6; font-weight: 300; }
+
+    /* ── CARD ── */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; }
+
+    /* ── INPUT ── */
+    .input-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+    .input-label { font-size: 13px; font-weight: 500; }
+    .word-count { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text-3); transition: color 0.2s; }
+    .word-count.warn { color: var(--amber); }
+    .word-count.good { color: var(--green); }
+
+    textarea {
+      width: 100%; min-height: 130px; resize: vertical;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 12px 14px; font-size: 14px; font-family: 'DM Sans', sans-serif;
+      font-weight: 300; color: var(--text-1); background: var(--bg);
+      line-height: 1.65; outline: none; transition: border-color 0.15s, background 0.15s;
+    }
+    textarea::placeholder { color: var(--text-3); }
+    textarea:focus { border-color: var(--border-md); background: var(--surface); }
+    textarea.input-error { border-color: var(--red); }
+
+    .val-msg { display: none; font-size: 12px; margin-top: 7px; padding: 7px 11px; border-radius: 6px; line-height: 1.5; }
+    .val-msg.error   { display: block; background: var(--red-bg);   color: var(--red);   }
+    .val-msg.warning { display: block; background: var(--amber-bg); color: var(--amber); }
+    .val-msg.success { display: block; background: var(--green-bg); color: var(--green); }
+
+    /* ── EXAMPLES ── */
+    .examples { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+    .examples-label { font-size: 12px; color: var(--text-3); }
+    .ex-pill {
+      font-size: 12px; color: var(--text-2); background: var(--accent-bg);
+      border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px;
+      cursor: pointer; transition: border-color 0.15s, color 0.15s; user-select: none;
+    }
+    .ex-pill:hover { border-color: var(--border-md); color: var(--text-1); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      width: 100%; margin-top: 14px; padding: 11px;
+      background: var(--text-1); color: #fff;
+      font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+      border: none; border-radius: var(--radius); cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:hover:not(:disabled) { opacity: 0.85; }
+    .btn:active:not(:disabled) { transform: scale(0.99); }
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .btn-ghost {
+      width: 100%; margin-top: 12px; padding: 10px;
+      background: transparent; color: var(--text-2);
+      font-size: 13px; font-family: 'DM Sans', sans-serif;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      cursor: pointer; transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-ghost:hover { border-color: var(--border-md); color: var(--text-1); }
+
+    /* ── API ERROR ── */
+    .api-error {
+      display: none; margin-top: 10px;
+      background: var(--red-bg); border: 1px solid var(--red-bd);
+      border-radius: var(--radius); padding: 10px 14px;
+      font-size: 13px; color: var(--red); line-height: 1.5;
+    }
+    .api-error.show { display: block; }
+
+    /* ── LOADING ── */
+    .loading { display: none; align-items: center; justify-content: center; gap: 10px; padding: 2.5rem 0; color: var(--text-2); font-size: 13px; font-weight: 300; }
+    .loading.show { display: flex; }
+    .spinner { width: 18px; height: 18px; border: 1.5px solid var(--border); border-top-color: var(--text-2); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── RESULT ── */
+    .result { display: none; }
+    .result.show { display: block; animation: fadeUp 0.3s ease; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .result-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+    .mbti-type { font-size: 44px; font-weight: 500; letter-spacing: -1.5px; line-height: 1; }
+    .mbti-role { font-size: 11px; color: var(--text-3); font-weight: 400; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .mbti-name { font-size: 16px; font-weight: 500; margin-top: 2px; }
+    .conf-chip { flex-shrink: 0; font-size: 12px; font-family: 'DM Mono', monospace; background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bd); border-radius: 20px; padding: 4px 12px; margin-top: 4px; }
+
+    .divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+    .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); margin-bottom: 12px; }
+
+    /* ── TRAIT ROWS ── */
+    .trait-row { margin-bottom: 14px; }
+    .trait-header { display: grid; grid-template-columns: 70px 1fr 44px; align-items: center; gap: 10px; margin-bottom: 5px; }
+    .trait-left { display: flex; align-items: center; gap: 6px; }
+    .trait-letter { font-size: 13px; font-weight: 500; font-family: 'DM Mono', monospace; width: 14px; text-align: center; }
+    .trait-name { font-size: 12px; color: var(--text-3); }
+    .trait-bar-bg { height: 4px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .trait-bar-fill { height: 100%; background: var(--text-1); border-radius: 3px; width: 0%; transition: width 0.75s cubic-bezier(0.4,0,0.2,1); }
+    .trait-conf { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text-3); text-align: right; }
+
+    /* ── KEY WORDS CHIPS ── */
+    .trait-words { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; padding-left: 20px; }
+    .word-chip {
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      border-radius: 4px;
+      padding: 2px 7px;
+      border: 1px solid;
+      cursor: default;
+    }
+    .word-chip.ie { background: var(--ie-bg); border-color: var(--ie-bd); color: var(--ie-tx); }
+    .word-chip.ns { background: var(--ns-bg); border-color: var(--ns-bd); color: var(--ns-tx); }
+    .word-chip.tf { background: var(--tf-bg); border-color: var(--tf-bd); color: var(--tf-tx); }
+    .word-chip.jp { background: var(--jp-bg); border-color: var(--jp-bd); color: var(--jp-tx); }
+
+    /* ── HIGHLIGHTED BIO ── */
+    .bio-highlight-section {
+      margin-top: 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+    }
+    .why-header { margin-bottom: 10px; }
+    .why-subtext { font-size: 12px; color: var(--text-3); font-weight: 300; line-height: 1.5; margin-top: 3px; }
+    .bio-highlight-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); margin-bottom: 10px; }
+    .bio-highlight-box {
+      font-size: 13px; line-height: 1.85; font-weight: 300;
+      color: var(--text-2); background: var(--bg);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+    .bio-highlight-box mark {
+      background: none;
+      border-radius: 3px;
+      padding: 1px 3px;
+      font-weight: 500;
+    }
+    .bio-highlight-box mark.ie { background: var(--ie-bg); color: var(--ie-tx); border-bottom: 2px solid var(--ie-bd); }
+    .bio-highlight-box mark.ns { background: var(--ns-bg); color: var(--ns-tx); border-bottom: 2px solid var(--ns-bd); }
+    .bio-highlight-box mark.tf { background: var(--tf-bg); color: var(--tf-tx); border-bottom: 2px solid var(--tf-bd); }
+    .bio-highlight-box mark.jp { background: var(--jp-bg); color: var(--jp-tx); border-bottom: 2px solid var(--jp-bd); }
+
+    /* ── LEGEND ── */
+    .legend { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-2); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+    .legend-dot.ie { background: var(--ie-bd); }
+    .legend-dot.ns { background: var(--ns-bd); }
+    .legend-dot.tf { background: var(--tf-bd); }
+    .legend-dot.jp { background: var(--jp-bd); }
+
+    /* ── DESCRIPTION ── */
+    .mbti-desc { font-size: 13px; color: var(--text-2); line-height: 1.7; font-weight: 300; padding-top: 0.25rem; }
+
+    /* ── MATCHES ── */
+    .match-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .match-pill { font-size: 12px; font-family: 'DM Mono', monospace; font-weight: 500; background: var(--accent-bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; }
+
+    /* ── WARNING BANNER ── */
+    .warning-banner { display: none; font-size: 12px; padding: 8px 12px; background: var(--amber-bg); color: var(--amber); border-radius: 6px; margin-bottom: 1rem; line-height: 1.5; }
+    .warning-banner.show { display: block; }
+
+    /* ── FOOTER ── */
+    footer { text-align: center; padding: 1.25rem; font-size: 12px; color: var(--text-3); border-top: 1px solid var(--border); background: var(--surface); }
+
+    @media (max-width: 480px) {
+      main { padding: 1.5rem 1rem 4rem; }
+      .mbti-type { font-size: 36px; }
+      nav { padding: 0 1rem; }
+      .trait-header { grid-template-columns: 60px 1fr 38px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">Persona <span>/ MBTI predictor</span></span>
+  <span class="nav-badge">91.4% accuracy</span>
+</nav>
+
+<main>
+  <div class="container">
+
+    <div class="header">
+      <h1>What does your bio say about you?</h1>
+      <p>Paste a dating profile bio — get your MBTI personality type and see exactly which words drove the prediction.</p>
+    </div>
+
+    <!-- INPUT CARD -->
+    <div class="card" id="input-card">
+      <div class="input-header">
+        <span class="input-label">Profile bio</span>
+        <span class="word-count" id="word-count">0 words</span>
+      </div>
+      <textarea
+        id="bio-input"
+        placeholder="Write about yourself — your hobbies, how you spend your weekends, what you value in a partner, what makes you tick..."
+        oninput="onType()"
+      ></textarea>
+      <div class="val-msg" id="val-msg"></div>
+      <div class="examples">
+        <span class="examples-label">Try:</span>
+        <span class="ex-pill" onclick="fillExample(0)">Introvert</span>
+        <span class="ex-pill" onclick="fillExample(1)">Extrovert</span>
+        <span class="ex-pill" onclick="fillExample(2)">Analyst</span>
+        <span class="ex-pill" onclick="fillExample(3)">Caregiver</span>
+      </div>
+      <button class="btn" id="submit-btn" disabled onclick="analyze()">Analyze personality</button>
+      <div class="api-error" id="api-error"></div>
+    </div>
+
+    <!-- LOADING -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <span>Analyzing profile...</span>
+    </div>
+
+    <!-- RESULT CARD -->
+    <div class="card result" id="result-card">
+      <div class="warning-banner" id="warning-banner"></div>
+
+      <div class="result-top">
+        <div>
+          <div class="mbti-type" id="r-type">INTJ</div>
+          <div class="mbti-role" id="r-role">Analyst</div>
+          <div class="mbti-name" id="r-name">The Architect</div>
+        </div>
+        <span class="conf-chip" id="r-conf">avg 84.2%</span>
+      </div>
+
+      <p class="mbti-desc" id="r-desc"></p>
+
+      <div class="divider"></div>
+
+      <!-- TRAIT BARS + KEY WORDS -->
+      <p class="section-label">Trait confidence & key words</p>
+      <div id="trait-bars"></div>
+
+      <!-- HIGHLIGHTED BIO -->
+      <div class="bio-highlight-section" id="bio-highlight-section">
+        <div class="why-header">
+          <p class="section-label" style="margin-bottom:4px">Why this result</p>
+          <p class="why-subtext">Words highlighted below are what drove each trait prediction. The model found these most significant in your bio.</p>
+        </div>
+        <div class="bio-highlight-box" id="bio-highlight-box"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <p class="section-label" style="margin-bottom:8px">Best matches</p>
+      <div class="match-pills" id="match-pills"></div>
+
+      <button class="btn-ghost" onclick="reset()">Analyze another bio</button>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  Built with Python · scikit-learn · TF-IDF · LinearSVC &nbsp;·&nbsp; 5-fold cross-validated
+</footer>
+
+<script>
+// ── MBTI METADATA ─────────────────────────────────────────────────────────
+const MBTI = {
+  INTJ: { role:"Analyst",  name:"The Architect",    desc:"Strategic and independent, INTJs combine vision with precision. They set high standards and thrive on turning complex problems into elegant solutions. In a partner they seek depth, intellectual honesty, and quiet ambition.", matches:["ENFP","ENTP","INFJ"] },
+  INTP: { role:"Analyst",  name:"The Thinker",      desc:"Curious and logical, INTPs are endlessly fascinated by ideas and systems. They value truth above comfort and bring quiet intensity to everything they care about. They seek a partner who matches their intellectual curiosity.", matches:["ENTJ","ENFJ","INFJ"] },
+  ENTJ: { role:"Analyst",  name:"The Commander",    desc:"Driven and decisive, ENTJs are natural leaders who think in systems and act with purpose. They seek a partner who is equally ambitious and can hold their own in a good debate.", matches:["INFP","INTP","ENFP"] },
+  ENTP: { role:"Analyst",  name:"The Debater",      desc:"Quick-witted and intellectually restless, ENTPs love challenging ideas and exploring every angle. They seek someone who can keep up, push back, and laugh while doing it.", matches:["INFJ","INTJ","ENFJ"] },
+  INFJ: { role:"Diplomat", name:"The Advocate",     desc:"Rare and deeply principled, INFJs are driven by meaning and authentic connection. They form few but profoundly deep relationships, seeking a partner who values substance over surface.", matches:["ENTP","ENFP","INTJ"] },
+  INFP: { role:"Diplomat", name:"The Mediator",     desc:"Idealistic and fiercely authentic, INFPs are guided by their values and a rich inner world. They seek someone real — who understands that feelings are data too.", matches:["ENTJ","ENFJ","ENFP"] },
+  ENFJ: { role:"Diplomat", name:"The Protagonist",  desc:"Warm, perceptive, and invested in people, ENFJs have a rare ability to bring out the best in others. They seek a partner who values growth as much as they do.", matches:["INFP","ISFP","INTP"] },
+  ENFP: { role:"Diplomat", name:"The Campaigner",   desc:"Bursting with energy and ideas, ENFPs connect deeply and authentically. They are spontaneous, passionate, always seeking someone who matches their enthusiasm for life.", matches:["INTJ","INFJ","ENFJ"] },
+  ISTJ: { role:"Sentinel", name:"The Logistician",  desc:"Dependable, precise, and quietly strong, ISTJs believe in doing things right. They are the person who shows up on time, prepared, committed — and want the same in return.", matches:["ESFP","ESTP","ISFP"] },
+  ISFJ: { role:"Sentinel", name:"The Defender",     desc:"Caring and quietly devoted, ISFJs show love through actions. They create warmth and stability everywhere they go, seeking someone who notices and appreciates the small things.", matches:["ESFP","ESTP","ENFP"] },
+  ESTJ: { role:"Sentinel", name:"The Executive",    desc:"Organized, direct, and dependable, ESTJs take commitments seriously and expect the same. They value honesty, structure, and a partner who is clear about what they want.", matches:["ISFP","ISTP","INFP"] },
+  ESFJ: { role:"Sentinel", name:"The Consul",       desc:"Sociable, caring, and attuned to others, ESFJs create harmony wherever they go. They seek someone who appreciates warmth and is not afraid to be emotionally present.", matches:["ISFP","ISTP","INFP"] },
+  ISTP: { role:"Explorer", name:"The Virtuoso",     desc:"Cool, observant, and self-sufficient, ISTPs are masters of understanding how things work. They show affection through quality time and practical help, not grand gestures.", matches:["ESFJ","ESTJ","ENFJ"] },
+  ISFP: { role:"Explorer", name:"The Adventurer",   desc:"Gentle, spontaneous, and in tune with the present moment, ISFPs experience the world through senses and emotion. They seek someone who appreciates beauty in the everyday.", matches:["ESTJ","ESFJ","ENFJ"] },
+  ESTP: { role:"Explorer", name:"The Entrepreneur", desc:"Bold, energetic, and fully present, ESTPs live in the moment and bring everyone along. They seek a partner who can keep up and is not afraid of spontaneity.", matches:["ISFJ","ISTJ","INFJ"] },
+  ESFP: { role:"Explorer", name:"The Entertainer",  desc:"Vibrant, generous, and infectiously fun, ESFPs make every moment more alive. They seek a partner who shares their love of people, experience, and genuine human connection.", matches:["ISTJ","ISFJ","INFJ"] },
+};
+
+const TRAIT_LABELS = { IE:["Introvert","Extravert"], NS:["Intuitive","Sensing"], TF:["Thinking","Feeling"], JP:["Judging","Perceiving"] };
+const TRAIT_CLASS  = { IE:"ie", NS:"ns", TF:"tf", JP:"jp" };
+const TRAIT_NAMES  = { IE:"I/E", NS:"N/S", TF:"T/F", JP:"J/P" };
+
+// ── EXAMPLE BIOS ──────────────────────────────────────────────────────────
+const EXAMPLES = [
+  "I'm a homebody who genuinely loves deep one-on-one conversations over coffee. Weekends are for books, slow mornings, and the occasional long solo walk. I'm not great at small talk but I'll remember your favorite film and ask about it months later. Looking for someone who values depth over drama and is not afraid of a little quiet.",
+  "Life's too short to stay in one place. I'm always planning the next trip, hosting game nights, or convincing friends to try a new restaurant on a Tuesday. I thrive on spontaneity and meeting new people energizes me. Looking for someone who can match my energy but also knows when to slow down.",
+  "Software engineer by day, amateur philosopher by night. I spend too much time thinking about systems, patterns, and why things work the way they do. I enjoy a good debate and believe intellectual honesty is a form of respect. Looking for someone curious, direct, and okay with the occasional deep-dive.",
+  "I'm a nurse and it genuinely does not feel like work — I love caring for people. My weekends involve cooking for friends, volunteering, and staying close to family. I value loyalty, consistency, and showing up for the people I love. Looking for someone warm, grounded, and ready to build something real.",
+];
+
+// ── VALIDATION ─────────────────────────────────────────────────────────────
+const MIN_STRICT = 10, MIN_WARN = 20;
+
+function validateBio(bio) {
+  const words  = bio.trim().split(/\s+/).filter(Boolean);
+  const wc     = words.length;
+  const unique = new Set(words.map(w => w.toLowerCase())).size;
+  const alpha  = (bio.match(/[a-zA-Z]/g)||[]).length / Math.max(bio.length,1);
+  if (!bio.trim())            return {ok:false, type:"error",   msg:"Please enter a bio."};
+  if (bio.length > 5000)      return {ok:false, type:"error",   msg:"Bio is too long. Keep it under 5000 characters."};
+  if (wc < MIN_STRICT)        return {ok:false, type:"error",   msg:`Too short (${wc} words). Please write at least ${MIN_STRICT} words.`};
+  if (/(.)\1{6,}/.test(bio))  return {ok:false, type:"error",   msg:"Bio appears to contain repeated characters."};
+  if (unique < 6)             return {ok:false, type:"error",   msg:"Bio has too few unique words. Write a more descriptive profile."};
+  if (alpha < 0.5)            return {ok:false, type:"error",   msg:"Bio contains too many non-letter characters."};
+  if (wc < MIN_WARN)          return {ok:true,  type:"warning", msg:`Short bio (${wc} words). 20+ words gives more reliable results.`};
+  return {ok:true, type:"success", msg:`${wc} words — ready to analyze.`};
+}
+
+function onType() {
+  const bio   = document.getElementById('bio-input').value;
+  const words = bio.trim().split(/\s+/).filter(Boolean).length;
+  const wc    = document.getElementById('word-count');
+  const vm    = document.getElementById('val-msg');
+  const btn   = document.getElementById('submit-btn');
+  const ta    = document.getElementById('bio-input');
+
+  wc.textContent = words + (words === 1 ? " word" : " words");
+  wc.className   = "word-count" + (words >= MIN_WARN ? " good" : words >= MIN_STRICT ? " warn" : "");
+
+  if (!bio.trim()) {
+    vm.className = "val-msg"; vm.textContent = "";
+    ta.classList.remove('input-error'); btn.disabled = true; return;
+  }
+  const v = validateBio(bio);
+  vm.className   = "val-msg " + v.type;
+  vm.textContent = v.msg;
+  ta.classList.toggle('input-error', v.type === "error");
+  btn.disabled   = !v.ok;
+}
+
+function fillExample(i) {
+  document.getElementById('bio-input').value = EXAMPLES[i];
+  onType();
+}
+
+// ── ANALYZE ────────────────────────────────────────────────────────────────
+async function analyze() {
+  const bio = document.getElementById('bio-input').value.trim();
+  if (!validateBio(bio).ok) return;
+
+  document.getElementById('input-card').style.display  = 'none';
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('api-error').classList.remove('show');
+  document.getElementById('result-card').classList.remove('show');
+
+  try {
+    const res  = await fetch('/predict', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({bio}),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Prediction failed.');
+    showResult(data, bio);
+  } catch(err) {
+    document.getElementById('loading').classList.remove('show');
+    document.getElementById('input-card').style.display = 'block';
+    const el = document.getElementById('api-error');
+    el.textContent = err.message || 'Something went wrong. Make sure the Flask server is running.';
+    el.classList.add('show');
+  }
+}
+
+// ── SHOW RESULT ────────────────────────────────────────────────────────────
+function showResult(data, originalBio) {
+  document.getElementById('loading').classList.remove('show');
+
+  const type = data.type || "????";
+  const meta = MBTI[type] || {role:"Unknown", name:"Unknown type", desc:"No description.", matches:[]};
+
+  document.getElementById('r-type').textContent = type;
+  document.getElementById('r-role').textContent = meta.role;
+  document.getElementById('r-name').textContent = meta.name;
+  document.getElementById('r-desc').textContent = meta.desc;
+
+  // Warning
+  const wb = document.getElementById('warning-banner');
+  if (data.warning) { wb.textContent = data.warning; wb.classList.add('show'); }
+  else wb.classList.remove('show');
+
+  // Average confidence
+  const traits = data.traits || {};
+  const confs  = Object.values(traits).map(t => t.confidence || 0);
+  const avg    = confs.length ? (confs.reduce((a,b)=>a+b,0)/confs.length).toFixed(1) : "—";
+  document.getElementById('r-conf').textContent = `avg ${avg}%`;
+
+  // ── Trait bars + word chips ──────────────────
+  const barsEl = document.getElementById('trait-bars');
+  barsEl.innerHTML = '';
+
+  // Collect all top words across traits for bio highlighting
+  const allTopWords = {}; // word → trait class
+
+  ['IE','NS','TF','JP'].forEach(trait => {
+    const td = traits[trait];
+    if (!td) return;
+    const letter   = td.letter;
+    const conf     = td.confidence || 0;
+    const topWords = td.top_words  || [];
+    const labelArr = TRAIT_LABELS[trait];
+    const label    = letter === trait[0] ? labelArr[0] : labelArr[1];
+    const cls      = TRAIT_CLASS[trait];
+
+    // Register words for highlight (first trait that claimed the word wins)
+    topWords.forEach(([w]) => { if (!allTopWords[w]) allTopWords[w] = cls; });
+
+    const row = document.createElement('div');
+    row.className = 'trait-row';
+    row.innerHTML = `
+      <div class="trait-header">
+        <div class="trait-left">
+          <span class="trait-letter">${letter}</span>
+          <span class="trait-name">${label}</span>
+        </div>
+        <div class="trait-bar-bg">
+          <div class="trait-bar-fill" data-w="${conf}%"></div>
+        </div>
+        <span class="trait-conf">${conf.toFixed(1)}%</span>
+      </div>
+      ${topWords.length ? `
+        <div class="trait-words">
+          ${topWords.map(([w]) => `<span class="word-chip ${cls}">${w}</span>`).join('')}
+        </div>` : ''}
+    `;
+    barsEl.appendChild(row);
+  });
+
+  // Animate bars
+  setTimeout(() => {
+    document.querySelectorAll('.trait-bar-fill').forEach(el => { el.style.width = el.dataset.w; });
+  }, 80);
+
+  // ── Bio highlighting ─────────────────────────
+  buildHighlightedBio(originalBio, allTopWords);
+
+  // ── Best match pills ─────────────────────────
+  document.getElementById('match-pills').innerHTML =
+    meta.matches.map(m => `<span class="match-pill">${m}</span>`).join('');
+
+  document.getElementById('result-card').classList.add('show');
+}
+
+// ── BIO HIGHLIGHTING ───────────────────────────────────────────────────────
+function buildHighlightedBio(bio, wordMap) {
+  // wordMap: { "family": "ie", "organizing": "jp", ... }
+  // We find each key word in the original bio text (case-insensitive)
+  // and wrap it in <mark class="...">
+
+  if (!Object.keys(wordMap).length) {
+    document.getElementById('bio-highlight-section').style.display = 'none';
+    return;
+  }
+  document.getElementById('bio-highlight-section').style.display = 'block';
+
+  // Sort words longest first so "deep conversations" matches before "deep"
+  const sortedWords = Object.keys(wordMap).sort((a, b) => b.length - a.length);
+
+  // Escape special regex chars
+  const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  // Build a map of character index → {end, cls} for non-overlapping replacements
+  let marked = bio;
+  // Replace word by word using a placeholder technique to avoid double-marking
+  const placeholders = [];
+  let temp = bio;
+
+  sortedWords.forEach(word => {
+    const cls  = wordMap[word];
+    const rx   = new RegExp(`\\b${escape(word)}\\b`, 'gi');
+    temp = temp.replace(rx, match => {
+      const ph = `\x00${placeholders.length}\x00`;
+      placeholders.push(`<mark class="${cls}">${match}</mark>`);
+      return ph;
+    });
+  });
+
+  // Escape remaining HTML entities then restore marks
+  temp = temp
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\x00(\d+)\x00/g, (_, i) => placeholders[+i]);
+
+  document.getElementById('bio-highlight-box').innerHTML = temp;
+
+  // ── Legend ───────────────────────────────────
+  const usedTraits = [...new Set(Object.values(wordMap))];
+  const traitFull  = {ie:"I/E dimension", ns:"N/S dimension", tf:"T/F dimension", jp:"J/P dimension"};
+  document.getElementById('legend').innerHTML = usedTraits.map(cls =>
+    `<span class="legend-item"><span class="legend-dot ${cls}"></span>${traitFull[cls]}</span>`
+  ).join('');
+}
+
+// ── RESET ──────────────────────────────────────────────────────────────────
+function reset() {
+  document.getElementById('result-card').classList.remove('show');
+  document.getElementById('input-card').style.display  = 'block';
+  document.getElementById('bio-input').value           = '';
+  document.getElementById('word-count').textContent    = '0 words';
+  document.getElementById('word-count').className      = 'word-count';
+  document.getElementById('val-msg').className         = 'val-msg';
+  document.getElementById('val-msg').textContent       = '';
+  document.getElementById('submit-btn').disabled       = true;
+  document.getElementById('bio-input').classList.remove('input-error');
+  document.getElementById('api-error').classList.remove('show');
+}
+
+// ── Ctrl/Cmd+Enter ─────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if ((e.metaKey||e.ctrlKey) && e.key==='Enter') {
+    const btn = document.getElementById('submit-btn');
+    if (!btn.disabled) analyze();
+  }
+});
+</script>
+</body>
+</html>
